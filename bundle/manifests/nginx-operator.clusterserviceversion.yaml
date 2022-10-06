@@ -11,12 +11,20 @@ metadata:
             "name": "nginxoperator-sample"
           },
           "spec": null
+        },
+        {
+          "apiVersion": "operator.example.com/v1alpha2",
+          "kind": "NginxOperator",
+          "metadata": {
+            "name": "nginxoperator-sample"
+          },
+          "spec": null
         }
       ]
     capabilities: Basic Install
     operators.operatorframework.io/builder: operator-sdk-v1.22.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
-  name: nginx-operator.v0.0.1
+  name: nginx-operator.v0.0.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -27,6 +35,11 @@ spec:
       kind: NginxOperator
       name: nginxoperators.operator.example.com
       version: v1alpha1
+    - description: NginxOperator is the Schema for the nginxoperators API
+      displayName: Nginx Operator
+      kind: NginxOperator
+      name: nginxoperators.operator.example.com
+      version: v1alpha2
   description: Operator for managing a basic Nginx deployment
   displayName: Nginx Operator
   icon:
@@ -131,7 +144,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: jhkwon91/nginx-operator:v0.4
+                image: docker.io/jhkwon91/nginx-operator:v0.0.2
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -139,6 +152,10 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -154,10 +171,19 @@ spec:
                     memory: 64Mi
                 securityContext:
                   allowPrivilegeEscalation: false
+                volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
+                  name: cert
+                  readOnly: true
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: nginx-operator-controller-manager
               terminationGracePeriodSeconds: 10
+              volumes:
+              - name: cert
+                secret:
+                  defaultMode: 420
+                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
@@ -214,4 +240,19 @@ spec:
   maturity: alpha
   provider:
     name: MyCompany
-  version: 0.0.1
+  replaces: nginx-operator.v0.0.1
+  version: 0.0.2
+  webhookdefinitions:
+  - admissionReviewVersions:
+    - v1
+    - v1alpha1
+    - v1alpha2
+    containerPort: 443
+    conversionCRDs:
+    - nginxoperators.operator.example.com
+    deploymentName: nginx-operator-controller-manager
+    generateName: cnginxoperators.kb.io
+    sideEffects: None
+    targetPort: 9443
+    type: ConversionWebhook
+    webhookPath: /convert

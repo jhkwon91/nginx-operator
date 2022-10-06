@@ -14,6 +14,11 @@ spec:
       displayName: Nginx Operator
       kind: NginxOperator
       name: nginxoperators.operator.example.com
+      version: v1alpha2
+    - description: NginxOperator is the Schema for the nginxoperators API
+      displayName: Nginx Operator
+      kind: NginxOperator
+      name: nginxoperators.operator.example.com
       version: v1alpha1
   description: Operator for managing a basic Nginx deployment
   displayName: Nginx Operator
@@ -45,4 +50,5 @@ spec:
   maturity: alpha
   provider:
     name: MyCompany
+  replaces: nginx-operator.v0.0.1
   version: 0.0.0

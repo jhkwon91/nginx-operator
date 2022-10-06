@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	operatorv1alpha1 "github.com/example/nginx-operator/api/v1alpha1"
+	operatorv1alpha2 "github.com/example/nginx-operator/api/v1alpha2"
 	"github.com/example/nginx-operator/assets"
 )
 
@@ -63,7 +64,7 @@ func (r *NginxOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	metrics.ReconcilesTotal.Inc()
 	logger := log.FromContext(ctx)
 
-	operatorCR := &operatorv1alpha1.NginxOperator{}
+	operatorCR := &operatorv1alpha2.NginxOperator{}
 	err := r.Get(ctx, req.NamespacedName, operatorCR)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Operator resource object not found.")
@@ -104,8 +105,11 @@ func (r *NginxOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if operatorCR.Spec.Replicas != nil {
 		deployment.Spec.Replicas = operatorCR.Spec.Replicas
 	}
-	if operatorCR.Spec.Port != nil {
-		deployment.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort = *operatorCR.Spec.Port
+	// if operatorCR.Spec.Port != nil {
+	// 	deployment.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort = *operatorCR.Spec.Port
+	// }
+	if len(operatorCR.Spec.Ports) > 0 {
+		deployment.Spec.Template.Spec.Containers[0].Ports = operatorCR.Spec.Ports
 	}
 	ctrl.SetControllerReference(operatorCR, deployment, r.Scheme)
 
